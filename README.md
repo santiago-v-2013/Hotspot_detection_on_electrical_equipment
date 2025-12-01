@@ -48,7 +48,7 @@ In this repository, we provide:
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/your-username/your-repo.git
+git clone https://github.com/santiago-v-2013/Hotspot_detection_on_electrical_equipment.git
 cd your-repo
 pip install -r requirements.txt
 chmod +x bin/*.sh

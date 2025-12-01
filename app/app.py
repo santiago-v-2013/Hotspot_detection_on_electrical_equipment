@@ -18,7 +18,6 @@ from datetime import datetime
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.preprocessing.hotspot_detector import HotspotDetectorPreprocessor
 from src.finetuning.models import get_model as get_classification_model
 from src.detection.models import YOLOv11Detector
 
@@ -107,41 +106,48 @@ def load_models():
             print(f"⚠️ Could not load detection model: {e}")
 
 
-def preprocess_image(image_path, target_size=(416, 416)):
-    """Preprocess image for detection."""
-    preprocessor = HotspotDetectorPreprocessor(
-        input_dir=str(image_path.parent),
-        output_dir=str(app.config['RESULTS_FOLDER'] / 'preprocessed'),
-        target_size=target_size
-    )
+def classify_equipment(image_path):
+    """
+    Classify equipment type.
     
-    # Load and preprocess
-    img = cv2.imread(str(image_path))
-    if img is None:
-        raise ValueError("Could not read image")
-    
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    return img_rgb
-
-
-def classify_equipment(image):
-    """Classify equipment type."""
+    Applies same preprocessing as training:
+    - Grayscale conversion (thermal images are single-channel)
+    - Histogram equalization for contrast enhancement
+    - Resize to 224x224
+    - Standard ImageNet normalization
+    """
     if equipment_model is None:
         return None, None
     
     # Get device
     device = next(equipment_model.parameters()).device
     
-    # Preprocess for ResNet-50
+    # Read image
+    img = cv2.imread(str(image_path))
+    
+    # Apply same preprocessing as EquipmentClassifierPreprocessor:
+    # 1. Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # 2. Apply histogram equalization for better contrast
+    equalized = cv2.equalizeHist(gray)
+    
+    # 3. Convert to 3-channel (models expect 3 channels)
+    img_3ch = cv2.cvtColor(equalized, cv2.COLOR_GRAY2RGB)
+    
+    # 4. Convert to PIL and apply model transforms
+    from PIL import Image
+    img_pil = Image.fromarray(img_3ch)
+    
+    # Apply standard transforms (resize + normalize)
     from torchvision import transforms
     transform = transforms.Compose([
-        transforms.ToPILImage(),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
-    img_tensor = transform(image).unsqueeze(0).to(device)
+    img_tensor = transform(img_pil).unsqueeze(0).to(device)
     
     with torch.no_grad():
         outputs = equipment_model(img_tensor)
@@ -152,18 +158,29 @@ def classify_equipment(image):
     return EQUIPMENT_CLASSES[predicted_class], confidence
 
 
-def classify_hotspot(image):
-    """Classify if image has hotspot."""
+def classify_hotspot(image_path):
+    """
+    Classify if image has hotspot.
+    
+    Applies same preprocessing as training:
+    - No preprocessing applied (uses raw images at original resolution)
+    - Resize to 224x224
+    - Standard ImageNet normalization
+    """
     if hotspot_model is None:
         return None, None
     
     # Get device
     device = next(hotspot_model.parameters()).device
     
-    # Preprocess for EfficientNet-B0
+    # Hotspot classification uses RAW images without preprocessing
+    # (confirmed: processed images are identical to raw)
+    from PIL import Image
+    image = Image.open(image_path).convert('RGB')
+    
+    # Apply standard transforms
     from torchvision import transforms
     transform = transforms.Compose([
-        transforms.ToPILImage(),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -181,11 +198,18 @@ def classify_hotspot(image):
 
 
 def detect_hotspots(image_path):
-    """Detect hotspots using YOLO."""
+    """
+    Detect hotspots using YOLO.
+    
+    YOLO was trained on RAW images without preprocessing
+    (confirmed: yolo_detection dataset uses raw images directly).
+    YOLO handles all preprocessing internally (resize, normalization, etc.)
+    """
     if detection_model is None:
         return None, None
     
-    # Run detection
+    # Run detection directly on RAW image
+    # YOLO handles all preprocessing internally
     results = detection_model.predict(
         source=str(image_path),
         conf=0.25,
@@ -211,7 +235,7 @@ def detect_hotspots(image_path):
                     'class': 'hotspot'
                 })
     
-    # Read image
+    # Read original image for drawing
     img = cv2.imread(str(image_path))
     if img is None:
         raise ValueError(f"Could not read image: {image_path}")
@@ -225,8 +249,8 @@ def detect_hotspots(image_path):
         print(f"  Detection {idx+1}: bbox=[{x1}, {y1}, {x2}, {y2}], conf={conf:.3f}")
         
         # Draw thick bounding box (bright red for better visibility)
-        thickness = max(4, int(img.shape[0] / 150))  # Thicker lines
-        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), thickness)  # BGR: Red
+        thickness = max(4, int(img.shape[0] / 150))
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), thickness)
         
         # Draw label background
         label = f"HOTSPOT #{idx+1} ({conf*100:.0f}%)"
@@ -254,7 +278,7 @@ def detect_hotspots(image_path):
 
 @app.route('/')
 def index():
-    """Main page."""
+    """Render the main page."""
     return render_template('index.html')
 
 
@@ -283,15 +307,15 @@ def upload_file():
         # Load models
         load_models()
         
-        # Read image
+        # Read image for metadata
         img = cv2.imread(str(filepath))
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         
+        # Pipeline exactly like notebooks:
         # 1. Equipment Classification
-        equipment_type, equipment_conf = classify_equipment(img_rgb)
+        equipment_type, equipment_conf = classify_equipment(filepath)
         
         # 2. Hotspot Classification
-        has_hotspot, hotspot_conf = classify_hotspot(img_rgb)
+        has_hotspot, hotspot_conf = classify_hotspot(filepath)
         
         # 3. Hotspot Detection
         detections, result_filename = detect_hotspots(filepath)
@@ -324,6 +348,9 @@ def upload_file():
         return jsonify(response)
     
     except Exception as e:
+        import traceback
+        print(f"❌ Error processing image: {e}")
+        print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
 
 
@@ -331,12 +358,6 @@ def upload_file():
 def get_result(filename):
     """Serve result images."""
     return send_from_directory(app.config['RESULTS_FOLDER'], filename)
-
-
-@app.route('/uploads/<filename>')
-def get_upload(filename):
-    """Serve uploaded images."""
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.route('/health')

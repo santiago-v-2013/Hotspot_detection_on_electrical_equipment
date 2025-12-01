@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Imaging Hotspot Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-fire-alt"></i>
+                    <h1>Thermal Hotspot Detector</h1>
+                </div>
+                <p class="subtitle">AI-Powered Thermal Imaging Analysis for Electrical Equipment</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <div class="upload-header">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h2>Upload Thermal Image</h2>
+                        <p>Drag & drop your thermal image here or click to browse</p>
+                    </div>
+
+                    <!-- Save Location Selector -->
+                    <div class="save-location-section">
+                        <div class="save-location-header">
+                            <i class="fas fa-folder"></i>
+                            <label for="saveLocation">Save Results To:</label>
+                        </div>
+                        <div class="save-location-input">
+                            <input 
+                                type="text" 
+                                id="saveLocation" 
+                                placeholder="Select folder to save results..." 
+                                readonly
+                            >
+                            <button class="btn btn-outline btn-sm" id="browseSaveBtn">
+                                <i class="fas fa-folder-open"></i>
+                                Browse
+                            </button>
+                        </div>
+                        <p class="save-location-hint">
+                            <i class="fas fa-info-circle"></i>
+                            Default: Downloads folder. Click Browse to choose a different location.
+                        </p>
+                    </div>
+
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-zone-content">
+                            <i class="fas fa-image drop-zone-icon"></i>
+                            <p class="drop-zone-text">Drag & drop image here</p>
+                            <p class="drop-zone-or">or</p>
+                            <button class="btn btn-primary" id="browseBtn">
+                                <i class="fas fa-folder-open"></i>
+                                Browse Files
+                            </button>
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                            <p class="drop-zone-hint">Supported formats: PNG, JPG, JPEG, BMP, TIF (Max 16MB)</p>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div class="image-preview" id="imagePreview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview">
+                            <button class="btn-close" id="clearBtn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Processing Button -->
+                    <div class="upload-actions">
+                        <button class="btn btn-success btn-lg" id="processBtn" disabled>
+                            <i class="fas fa-microchip"></i>
+                            Analyze Image
+                        </button>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading" id="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Processing image with AI models...</p>
+                        <p class="loading-steps" id="loadingSteps">Initializing...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2><i class="fas fa-chart-line"></i> Analysis Results</h2>
+                </div>
+
+                <div class="results-grid">
+                    <!-- Detection Result Image -->
+                    <div class="result-card result-image-card">
+                        <h3><i class="fas fa-camera"></i> Detection Result</h3>
+                        <div class="result-image-container">
+                            <img id="resultImage" src="" alt="Detection Result">
+                        </div>
+                        <div class="image-actions">
+                            <button class="btn btn-outline" id="downloadBtn">
+                                <i class="fas fa-download"></i> Download Result
+                            </button>
+                            <button class="btn btn-outline" id="downloadCustomBtn">
+                                <i class="fas fa-save"></i> Save to Custom Location
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Details -->
+                    <div class="result-card">
+                        <h3><i class="fas fa-info-circle"></i> Analysis Details</h3>
+                        
+                        <!-- Equipment Classification -->
+                        <div class="analysis-item">
+                            <div class="analysis-header">
+                                <i class="fas fa-tools"></i>
+                                <h4>Equipment Type</h4>
+                            </div>
+                            <div class="analysis-content">
+                                <div class="label-value">
+                                    <span class="label">Type:</span>
+                                    <span class="value" id="equipmentType">-</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="equipmentConfBar"></div>
+                                    <span class="confidence-text" id="equipmentConf">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <!-- Hotspot Classification -->
+                        <div class="analysis-item">
+                            <div class="analysis-header">
+                                <i class="fas fa-fire"></i>
+                                <h4>Hotspot Presence</h4>
+                            </div>
+                            <div class="analysis-content">
+                                <div class="label-value">
+                                    <span class="label">Status:</span>
+                                    <span class="value status" id="hotspotStatus">-</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="hotspotConfBar"></div>
+                                    <span class="confidence-text" id="hotspotConf">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <!-- Detection Results -->
+                        <div class="analysis-item">
+                            <div class="analysis-header">
+                                <i class="fas fa-crosshairs"></i>
+                                <h4>Hotspot Detections</h4>
+                            </div>
+                            <div class="analysis-content">
+                                <div class="label-value">
+                                    <span class="label">Count:</span>
+                                    <span class="value badge" id="detectionCount">0</span>
+                                </div>
+                                <div id="detectionsList"></div>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <!-- Metadata -->
+                        <div class="analysis-item">
+                            <div class="analysis-header">
+                                <i class="fas fa-info"></i>
+                                <h4>Image Information</h4>
+                            </div>
+                            <div class="analysis-content metadata">
+                                <div class="label-value">
+                                    <span class="label">Size:</span>
+                                    <span class="value" id="imageSize">-</span>
+                                </div>
+                                <div class="label-value">
+                                    <span class="label">Processed:</span>
+                                    <span class="value" id="processedAt">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Analysis Button -->
+                <div class="results-actions">
+                    <button class="btn btn-primary btn-lg" id="newAnalysisBtn">
+                        <i class="fas fa-plus"></i>
+                        Analyze Another Image
+                    </button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>
+                <i class="fas fa-code"></i> 
+                Powered by YOLOv11, ResNet-50, and EfficientNet-B0
+            </p>
+            <p>© 2025 Thermal Imaging Hotspot Detection System</p>
+        </div>
+    </footer>
+
+    <!-- Error Toast -->
+    <div class="toast toast-error" id="errorToast" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="errorMessage">An error occurred</span>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

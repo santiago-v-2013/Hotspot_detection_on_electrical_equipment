@@ -256,3 +256,9 @@ data/yolo_detection/**/*.txt
 
 # Ignore YOLO runs output
 runs/
+
+# Flask app uploads and results
+app/uploads/*
+!app/uploads/.gitkeep
+app/results/*
+!app/results/.gitkeep

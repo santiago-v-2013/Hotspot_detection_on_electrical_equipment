@@ -32,6 +32,15 @@ transformers>=4.57.0        # Hugging Face transformers (optional)
 tqdm>=4.67.0
 requests>=2.32.0
 
+# Web Application
+flask>=3.1.2
+werkzeug>=3.1.4
+gunicorn>=23.0.0            # Production WSGI server
+blinker>=1.9.0              # Flask signals support
+itsdangerous>=2.2.0         # Flask session security
+jinja2>=3.1.6               # Flask templating engine
+markupsafe>=3.0.3           # Jinja2 dependency
+
 # Jupyter Notebooks (optional but recommended)
 jupyter>=1.1.0
 ipykernel>=6.29.0

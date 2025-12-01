@@ -56,16 +56,20 @@ def load_models():
     """Load all models (lazy loading)."""
     global equipment_model, hotspot_model, detection_model
     
+    # Determine device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     if equipment_model is None:
         try:
             # Load equipment classification model (ResNet-50)
             checkpoint_path = project_root / 'models/equipment_classification/resnet50/best_model.pth'
             if checkpoint_path.exists():
-                checkpoint = torch.load(checkpoint_path, map_location='cpu')
+                checkpoint = torch.load(checkpoint_path, map_location=device)
                 equipment_model = get_classification_model('resnet50', len(EQUIPMENT_CLASSES), pretrained=False)
                 equipment_model.load_state_dict(checkpoint['model_state_dict'])
+                equipment_model.to(device)
                 equipment_model.eval()
-                print("✅ Equipment classification model loaded")
+                print(f"✅ Equipment classification model loaded on {device}")
         except Exception as e:
             print(f"⚠️ Could not load equipment model: {e}")
     
@@ -75,11 +79,12 @@ def load_models():
             from src.finetuning.hotspot_models import get_hotspot_model
             checkpoint_path = project_root / 'models/hotspot_classification/efficientnet_b0/best_model.pth'
             if checkpoint_path.exists():
-                checkpoint = torch.load(checkpoint_path, map_location='cpu')
-                hotspot_model = get_hotspot_model('efficientnet_b0', 2, pretrained=False)
+                checkpoint = torch.load(checkpoint_path, map_location=device)
+                hotspot_model = get_hotspot_model('efficientnet_b0', 2, pretrained=False, device=str(device))
                 hotspot_model.load_state_dict(checkpoint['model_state_dict'])
+                hotspot_model.to(device)
                 hotspot_model.eval()
-                print("✅ Hotspot classification model loaded")
+                print(f"✅ Hotspot classification model loaded on {device}")
         except Exception as e:
             print(f"⚠️ Could not load hotspot model: {e}")
     
@@ -124,6 +129,9 @@ def classify_equipment(image):
     if equipment_model is None:
         return None, None
     
+    # Get device
+    device = next(equipment_model.parameters()).device
+    
     # Preprocess for ResNet-50
     from torchvision import transforms
     transform = transforms.Compose([
@@ -133,7 +141,7 @@ def classify_equipment(image):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
-    img_tensor = transform(image).unsqueeze(0)
+    img_tensor = transform(image).unsqueeze(0).to(device)
     
     with torch.no_grad():
         outputs = equipment_model(img_tensor)
@@ -149,6 +157,9 @@ def classify_hotspot(image):
     if hotspot_model is None:
         return None, None
     
+    # Get device
+    device = next(hotspot_model.parameters()).device
+    
     # Preprocess for EfficientNet-B0
     from torchvision import transforms
     transform = transforms.Compose([
@@ -158,7 +169,7 @@ def classify_hotspot(image):
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     
-    img_tensor = transform(image).unsqueeze(0)
+    img_tensor = transform(image).unsqueeze(0).to(device)
     
     with torch.no_grad():
         outputs = hotspot_model(img_tensor)

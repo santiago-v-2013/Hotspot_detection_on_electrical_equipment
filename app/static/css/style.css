@@ -452,6 +452,27 @@ body::before {
     color: var(--text-primary);
 }
 
+.help-text {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid #ef4444;
+    border-radius: 5px;
+}
+
+.confidence-container {
+    margin-top: 10px;
+}
+
+.confidence-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
 .result-card h3 i {
     color: var(--primary-color);
 }

@@ -106,6 +106,7 @@
                     <!-- Detection Result Image -->
                     <div class="result-card result-image-card">
                         <h3><i class="fas fa-camera"></i> Detection Result</h3>
+                        <p class="help-text"><span style="color: #ef4444;">🔴 Red boxes</span> show where hotspots were detected</p>
                         <div class="result-image-container">
                             <img id="resultImage" src="" alt="Detection Result">
                         </div>
@@ -134,9 +135,12 @@
                                     <span class="label">Type:</span>
                                     <span class="value" id="equipmentType">-</span>
                                 </div>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" id="equipmentConfBar"></div>
-                                    <span class="confidence-text" id="equipmentConf">-</span>
+                                <div class="confidence-container">
+                                    <div class="confidence-label">Confidence (how sure the AI is):</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" id="equipmentConfBar"></div>
+                                        <span class="confidence-text" id="equipmentConf">-</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -154,9 +158,12 @@
                                     <span class="label">Status:</span>
                                     <span class="value status" id="hotspotStatus">-</span>
                                 </div>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" id="hotspotConfBar"></div>
-                                    <span class="confidence-text" id="hotspotConf">-</span>
+                                <div class="confidence-container">
+                                    <div class="confidence-label">Confidence (how sure the AI is):</div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" id="hotspotConfBar"></div>
+                                        <span class="confidence-text" id="hotspotConf">-</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

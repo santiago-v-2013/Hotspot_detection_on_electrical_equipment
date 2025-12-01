@@ -224,22 +224,22 @@ def detect_hotspots(image_path):
         
         print(f"  Detection {idx+1}: bbox=[{x1}, {y1}, {x2}, {y2}], conf={conf:.3f}")
         
-        # Draw thick bounding box (green)
-        thickness = max(2, int(img.shape[0] / 200))  # Scale with image size
-        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), thickness)
+        # Draw thick bounding box (bright red for better visibility)
+        thickness = max(4, int(img.shape[0] / 150))  # Thicker lines
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), thickness)  # BGR: Red
         
         # Draw label background
-        label = f"Hotspot {conf:.2f}"
+        label = f"HOTSPOT #{idx+1} ({conf*100:.0f}%)"
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.6
+        font_scale = 0.8
         font_thickness = 2
         (text_w, text_h), baseline = cv2.getTextSize(label, font, font_scale, font_thickness)
         
-        # Draw filled rectangle for text background
-        cv2.rectangle(img, (x1, y1 - text_h - 10), (x1 + text_w + 10, y1), (0, 255, 0), -1)
+        # Draw filled rectangle for text background (red)
+        cv2.rectangle(img, (x1, y1 - text_h - 12), (x1 + text_w + 10, y1), (0, 0, 255), -1)
         
-        # Draw text
-        cv2.putText(img, label, (x1 + 5, y1 - 5), font, font_scale, (0, 0, 0), font_thickness)
+        # Draw text (white on red)
+        cv2.putText(img, label, (x1 + 5, y1 - 5), font, font_scale, (255, 255, 255), font_thickness)
     
     # Save result image
     result_filename = f"result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"

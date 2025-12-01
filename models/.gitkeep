@@ -1,0 +1,4 @@
+# This directory stores trained models organized by task:
+# - equipment_classification/: Models for equipment type classification
+# - hotspot_classification/: Models for binary hotspot classification  
+# - hotspot_detection/: Models for hotspot detection with bounding boxes

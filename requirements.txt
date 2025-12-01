@@ -1,0 +1,64 @@
+# ========================================
+# Thermal Imaging Hot Spot Detection
+# Python 3.10+
+# ========================================
+
+# Core Scientific Computing
+numpy>=2.2.0
+pandas>=2.3.0
+scipy>=1.14.0
+scikit-learn>=1.7.0
+
+# Image Processing
+pillow>=10.0.0
+opencv-python>=4.12.0
+
+# Visualization
+matplotlib>=3.10.0
+seaborn>=0.13.0
+
+# Deep Learning - PyTorch
+# Install with CUDA support using conda (recommended):
+# conda install pytorch torchvision torchaudio pytorch-cuda=12.8 -c pytorch -c nvidia
+torch>=2.9.0
+torchvision>=0.24.0
+
+# Deep Learning - Models and Utilities
+ultralytics>=8.3.0          # YOLOv11, YOLOv8 for object detection
+timm>=1.0.0                 # Pre-trained vision models (optional, if needed)
+transformers>=4.57.0        # Hugging Face transformers (optional)
+
+# Progress Bars and CLI
+tqdm>=4.67.0
+requests>=2.32.0
+
+# Jupyter Notebooks (optional but recommended)
+jupyter>=1.1.0
+ipykernel>=6.29.0
+ipywidgets>=8.1.0
+notebook>=7.0.0
+
+# Development Tools (optional)
+# Uncomment for development
+# pytest>=8.0.0
+# black>=24.0.0
+# flake8>=7.0.0
+# mypy>=1.8.0
+
+# ========================================
+# Installation Instructions
+# ========================================
+#
+# Option 1: Using Conda (Recommended)
+# -----------------------------------
+# conda env create -f environment.yml
+# conda activate vision_env
+#
+# Option 2: Using pip
+# -----------------------------------
+# pip install -r requirements.txt
+#
+# For CUDA support with pip:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+#
+# ========================================

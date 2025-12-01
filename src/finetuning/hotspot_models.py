@@ -218,3 +218,58 @@ def get_model_info(model_name: str) -> dict:
     }
     
     return info.get(model_name.lower(), {})
+
+
+def get_hotspot_model(
+    model_name: str = 'efficientnet_b0',
+    num_classes: int = 2,
+    pretrained: bool = True,
+    checkpoint_path: Optional[str] = None,
+    device: str = 'cuda'
+) -> nn.Module:
+    """
+    Load a trained hotspot classification model.
+    
+    Args:
+        model_name: Name of the model architecture
+        num_classes: Number of classes (default: 2 for binary classification)
+        pretrained: Whether to use ImageNet pretrained weights as base
+        checkpoint_path: Path to saved model checkpoint
+        device: Device to load model on ('cuda' or 'cpu')
+        
+    Returns:
+        Loaded model ready for inference
+    """
+    # Create model
+    model = get_model(
+        model_name=model_name,
+        num_classes=num_classes,
+        pretrained=pretrained,
+        freeze_backbone=False
+    )
+    
+    # Load checkpoint if provided
+    if checkpoint_path:
+        try:
+            checkpoint = torch.load(checkpoint_path, map_location=device)
+            
+            # Handle different checkpoint formats
+            if 'model_state_dict' in checkpoint:
+                model.load_state_dict(checkpoint['model_state_dict'])
+                logger.info(f"Loaded model from checkpoint: {checkpoint_path}")
+                if 'epoch' in checkpoint:
+                    logger.info(f"Checkpoint epoch: {checkpoint['epoch']}")
+                if 'best_val_accuracy' in checkpoint:
+                    logger.info(f"Best validation accuracy: {checkpoint['best_val_accuracy']:.4f}")
+            else:
+                model.load_state_dict(checkpoint)
+                logger.info(f"Loaded model state dict from: {checkpoint_path}")
+        except Exception as e:
+            logger.warning(f"Could not load checkpoint {checkpoint_path}: {e}")
+            logger.info("Using model with ImageNet pretrained weights only")
+    
+    # Move to device and set to eval mode
+    model = model.to(device)
+    model.eval()
+    
+    return model
